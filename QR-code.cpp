@@ -49,9 +49,9 @@ int main()
         {
             cout << "Decoded Data : " << data << endl;
 
-           // display(frame, bbox);
+            display(frame, bbox);
             rectifiedImage.convertTo(rectifiedImage, CV_8UC3);
-            imshow("Detection", rectifiedImage);
+           // imshow("Detection", rectifiedImage);
 
             //waitKey(0);
         }
