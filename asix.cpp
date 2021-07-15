@@ -12,6 +12,11 @@ using namespace cv;
 using namespace std;
 
 static double QR_CODE_WIDTH = 0.06;
+static double MAP_WIDTH = 0.21;
+static double MAP_HEIGHT = 0.3;
+static double QR_CENTER_X = 0.115;
+static double QR_CENTER_Y = 0.051;
+
 void get_camera_params(Mat &cameraMatrix, Mat &distCoeffs)
 {
     // Defining the dimensions of checkerboard
@@ -89,18 +94,6 @@ void get_camera_params(Mat &cameraMatrix, Mat &distCoeffs)
     cv::calibrateCamera(objpoints, imgpoints, cv::Size(gray.rows,gray.cols), cameraMatrix, distCoeffs, R, T);
 }
 
-// void display(Mat &im, Mat &bbox)
-// {
-//     int n = bbox.rows;
-//     for (int i = 0; i < n; i++)
-//     {
-//         line(im, Point2i(bbox.at<float>(i, 0), bbox.at<float>(i, 1)), 
-//         Point2i(bbox.at<float>((i + 1) % n, 0), bbox.at<float>((i + 1) % n, 1)), Scalar(255, 0, 0), 3);
-//     }
-    
-//     imshow("Detection", im);
-// }
-
 void drawCubeWireframe(
     cv::InputOutputArray image, cv::InputArray cameraMatrix,
     cv::InputArray distCoeffs, cv::InputArray rvec, cv::InputArray tvec,
@@ -146,47 +139,18 @@ void drawCubeWireframe(
     cv::line(image, imagePoints[6], imagePoints[7], cv::Scalar(255, 0, 0), 3);
 }
 
-void detectBlackRectangles(Mat& image, std::vector<std::vector<cv::Point>>& stickers) {
-    cv::Mat image_hsv;
-    std::vector< std::vector<cv::Point> > contours;
-    cv::cvtColor(image, image_hsv, cv::COLOR_BGR2HSV ); 
-    cv::Mat tmp_img(image.size(), CV_8U);
-
-    cv::inRange(image_hsv, cv::Scalar(0, 0, 0, 0), cv::Scalar(180, 255, 30, 0), tmp_img);
-
-    cv::dilate(tmp_img,tmp_img,cv::Mat(), cv::Point(-1,-1), 3);
-    cv::erode(tmp_img,tmp_img,cv::Mat(), cv::Point(-1,-1), 1);
-    cv::findContours(tmp_img, stickers, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
-    for (uint i = 0; i<contours.size(); i++) {
-        cv::Mat sticker;
-        cv::Rect rect=cv::boundingRect(contours[i]);
-        image(rect).copyTo(sticker);
-        cv::rectangle(image, rect, cv::Scalar(0, 250, 0), 2);
-        stickers.push_back(sticker); 
+void drawTrajectory(std::vector<cv::Point2f>& trajectory, Mat& image) {
+    for (auto point = trajectory.begin(); point < trajectory.end() - 1; ++point) {
+            line(image, point[0], point[1], Scalar(0,0,255), 3, LINE_AA, 0);
     }
 }
 
-bool cmpPointX(const cv::Point &a, const cv::Point &b) {
-    return a.x < b.x;
-}
-
-bool cmpPointY(const cv::Point &a, const cv::Point &b) {
-    return a.y < b.y;
-}
-
-static bool stickers_comp(std::vector<cv::Point>& st1, std::vector<cv::Point>& st2) {
-    int first_x = abs((*min_element(st1.begin(), st1.end(), cmpPointX)).x - (*max_element(st1.begin(), st1.end(), cmpPointX)).x);
-    int first_y = abs((*min_element(st1.begin(), st1.end(), cmpPointY)).y - (*max_element(st1.begin(), st1.end(), cmpPointY)).y);
-
-    int sec_x = abs((*min_element(st2.begin(), st2.end(), cmpPointX)).x - (*max_element(st2.begin(), st2.end(), cmpPointX)).x);
-    int sec_y = abs((*min_element(st2.begin(), st2.end(), cmpPointY)).y - (*max_element(st2.begin(), st2.end(), cmpPointY)).y);
-
-    return (first_x * first_y < sec_x * sec_y);
-}
-
-
 int main()
 {
+    Mat trj_image = imread("map.jpg", IMREAD_COLOR);
+    resize(trj_image, trj_image, Size(trj_image.cols/2, trj_image.rows/2));
+
+    std::vector<cv::Point2f> trajectory;
     Mat cameraMatrix, distCoeffs;
     get_camera_params(cameraMatrix, distCoeffs);
     VideoCapture cap(0);
@@ -196,6 +160,7 @@ int main()
     }
 
     namedWindow("Detection", cv::WindowFlags::WINDOW_AUTOSIZE);
+    namedWindow("Trajectory", cv::WindowFlags::WINDOW_AUTOSIZE);
     std::vector<std::vector<cv::Point>> stickers;
 
     while (1)
@@ -216,7 +181,7 @@ int main()
         std::string data = qrDecoder.detectAndDecode(frame, bbox, rectifiedImage);
 
         if (data.length() > 0) {
-            cout << "Decoded Data : " << data << endl;
+           // cout << "Decoded Data : " << data << endl;
         //     display(frame, bbox);
         //     rectifiedImage.convertTo(rectifiedImage, CV_8UC3);
         //     // imshow("Detection", rectifiedImage);
@@ -228,18 +193,6 @@ int main()
         //     imshow("Detection", frame);
         // }
     
-        detectBlackRectangles(frame, stickers);
-        auto st = max_element(stickers.begin(), stickers.end(), stickers_comp);
-
-        cv::Point sticker1; 
-        sticker1.x = (*min_element((*st).begin(), (*st).end(), cmpPointX)).x;
-        sticker1.y = (*min_element((*st).begin(), (*st).end(), cmpPointY)).y;
-        cv::Point sticker2; 
-        sticker2.x = (*max_element((*st).begin(), (*st).end(), cmpPointX)).x;
-        sticker2.y = (*max_element((*st).begin(), (*st).end(), cmpPointY)).y;
-
-        cv::rectangle(frame, Rect(sticker1, sticker2),cv::Scalar(0,250,0), 2);
-
         vector<Point3f> obj_coords;
         obj_coords.push_back(Point3f(0,0,0));
         obj_coords.push_back(Point3f(0,QR_CODE_WIDTH,0));
@@ -251,9 +204,19 @@ int main()
 
         if(!bbox.empty()) {
             solvePnP(obj_coords, bbox, cameraMatrix, distCoeffs, R, T);
-            // cv::aruco::drawAxis(frame, cameraMatrix, distCoeffs, R, T, 0.07);
+            cv::aruco::drawAxis(frame, cameraMatrix, distCoeffs, R, T, 0.07);
             drawCubeWireframe(frame, cameraMatrix, distCoeffs, R, T, QR_CODE_WIDTH);
+            Mat Rt, Rtt;
+            Rodrigues(R,Rt);
+            transpose(Rt,Rtt);
+            cout << -Rtt*T << endl;
+            Mat1f temp = -Rtt*T;
+            cout << (temp(0) + QR_CENTER_X)*(trj_image.cols/MAP_WIDTH) << ' '  << (temp(1) + QR_CENTER_Y)*(trj_image.rows*2/MAP_HEIGHT) << endl;
+            Point2f point((temp(0) + QR_CENTER_X)*(trj_image.cols/MAP_WIDTH), (temp(1) + QR_CENTER_Y)*(trj_image.rows/MAP_HEIGHT));
+            trajectory.push_back(point);
         }
+        imshow("Trajectory", trj_image);
+        drawTrajectory(trajectory, trj_image);
 
         imshow("Detection", frame);
         if (waitKey(30) == 27) {
