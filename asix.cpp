@@ -83,7 +83,7 @@ void getCameraParams(Mat& cameraMatrix, Mat& distCoeffs) {
     calibrateCamera(objpoints, imgpoints, cv::Size(gray.rows,gray.cols), cameraMatrix, distCoeffs, R, T);
 }
 
-void drawCubeWireframe(InputOutputArray& image, InputArray& cameraMatrix, InputArray& distCoeffs, InputArray& rvec, InputArray& tvec, float l) {
+void drawCubeWireframe(InputOutputArray& image, const InputArray& cameraMatrix, const InputArray& distCoeffs, InputArray& rvec, InputArray& tvec, float l) {
 
     CV_Assert(
         image.getMat().total() != 0 &&
@@ -123,7 +123,7 @@ void drawCubeWireframe(InputOutputArray& image, InputArray& cameraMatrix, InputA
     line(image, imagePoints[6], imagePoints[7], Scalar(255, 0, 0), 3);
 }
 
-void drawTrajectory(vector<Point2f>& trajectory, Mat& image) {
+void drawTrajectory(const vector<Point2f>& trajectory, Mat& image) {
     for (auto point = trajectory.begin(); point < trajectory.end() - 1; ++point) {
             line(image, point[0], point[1], Scalar(0, 0, 255), 3, LINE_AA, 0);
     }
@@ -136,7 +136,7 @@ int main() {
     vector<Point2f> trajectory;
     Mat cameraMatrix, distCoeffs;
     getCameraParams(cameraMatrix, distCoeffs);
-    VideoCapture cap("black.mp4");
+    VideoCapture cap(0);
 
     if (!cap.isOpened()) {
         return -1;
