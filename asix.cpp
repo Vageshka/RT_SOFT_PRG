@@ -38,7 +38,7 @@ void getCameraParams(Mat& cameraMatrix, Mat& distCoeffs) {
     // Extracting path of individual image stored in a given directory
     vector<cv::String> images;
     // Path of the folder containing checkerboard images
-    std::string path = "./images_User_Facing/";
+    std::string path = "./images/";
 
     glob(path, images);
 
@@ -48,7 +48,7 @@ void getCameraParams(Mat& cameraMatrix, Mat& distCoeffs) {
     bool success;
 
     // Looping over all the images in the directory
-    for(auto image: images) {
+    for (auto image: images) {
         frame = imread(image);
         cvtColor(frame, gray, COLOR_BGR2GRAY);
 
@@ -61,11 +61,11 @@ void getCameraParams(Mat& cameraMatrix, Mat& distCoeffs) {
         * we refine the pixel coordinates and display 
         * them on the images of checker board
         */
-        if(success) {
+        if (success) {
             TermCriteria criteria(TermCriteria::EPS | TermCriteria::COUNT, 30, 0.001);
             
             // refining pixel coordinates for given 2d points.
-            cornerSubPix(gray, corner_pts, cv::Size(11,11), cv::Size(-1,-1), criteria);
+            cornerSubPix(gray, corner_pts, cv::Size(11, 11), cv::Size(-1, -1), criteria);
             
             objpoints.push_back(objp);
             imgpoints.push_back(corner_pts);
@@ -169,7 +169,7 @@ int main() {
         
         Mat R,T;
 
-        if(!bbox.empty()) {
+        if (!bbox.empty()) {
             solvePnP(obj_coords, bbox, cameraMatrix, distCoeffs, R, T);
             // aruco::drawAxis(frame, cameraMatrix, distCoeffs, R, T, 0.07);
             drawCubeWireframe(frame, cameraMatrix, distCoeffs, R, T, QR_CODE_WIDTH);
