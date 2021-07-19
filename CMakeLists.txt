@@ -6,5 +6,5 @@ find_package( OpenCV REQUIRED )
 MESSAGE(STATUS "Include dirs ${OpenCV_INCLUDE_DIRS}")
 MESSAGE(STATUS "LINK LIBRARIES ${OpenCV_LIBS}")
 
-add_executable(code asix.cpp)
+add_executable(code detect.cpp)
 target_link_libraries(code ${OpenCV_LIBS})
