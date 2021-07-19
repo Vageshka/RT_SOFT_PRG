@@ -22,7 +22,7 @@ void display(Mat &im, Mat &bbox)
 int main()
 {
 
-    VideoCapture cap(2);
+    VideoCapture cap(1);
     if (!cap.isOpened())
     {
         return -1;

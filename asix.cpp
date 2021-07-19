@@ -49,6 +49,7 @@ void getCameraParams(Mat& cameraMatrix, Mat& distCoeffs) {
 
     // Looping over all the images in the directory
     for (auto image: images) {
+
         frame = imread(image);
         cvtColor(frame, gray, COLOR_BGR2GRAY);
 
@@ -62,6 +63,7 @@ void getCameraParams(Mat& cameraMatrix, Mat& distCoeffs) {
         * them on the images of checker board
         */
         if (success) {
+                    cout << "success" << endl;
             TermCriteria criteria(TermCriteria::EPS | TermCriteria::COUNT, 30, 0.001);
             
             // refining pixel coordinates for given 2d points.
@@ -136,7 +138,7 @@ int main() {
     vector<Point2f> trajectory;
     Mat cameraMatrix, distCoeffs;
     getCameraParams(cameraMatrix, distCoeffs);
-    VideoCapture cap(0);
+    VideoCapture cap(1);
 
     if (!cap.isOpened()) {
         return -1;
