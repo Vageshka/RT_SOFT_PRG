@@ -21,6 +21,7 @@ const static double MAP_WIDTH = 0.21;
 const static double MAP_HEIGHT = 0.3;
 const static double QR_CENTER_X = 0.115;
 const static double QR_CENTER_Y = 0.051;
+const static std::string path = "./images_User_Facing/";
 
 void alignImages(Mat& im1, Mat& im2, Mat& im1Reg, Mat& h) {
   // Convert images to grayscale
@@ -81,11 +82,8 @@ void getCameraParams(Mat& cameraMatrix, Mat& distCoeffs) {
         objp.push_back(Point3f(j, i, 0));
     }
 
-
     // Extracting path of individual image stored in a given directory
     vector<cv::String> images;
-    // Path of the folder containing checkerboard images
-    std::string path = "./images_User_Facing/";
 
     glob(path, images);
 
